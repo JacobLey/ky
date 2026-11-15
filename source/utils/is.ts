@@ -17,6 +17,17 @@ export const isError = (value: unknown): value is Error =>
 export const isRequest = (value: unknown): value is Request =>
 	value instanceof globalThis.Request || objectToString.call(value) === '[object Request]';
 
+// Whether the `Request` constructor can copy the value: an instance of the global `Request`, or of a class it extends. When the global is replaced by a subclass (as `@hono/node-server`'s `serve` does by default), a `Request` made by the runtime's own class, such as any `clone()`, isn't an instance of the global but is still an actual `Request`.
+export const isRequestInstance = (value: unknown): value is Request => {
+	for (let constructor_ = globalThis.Request; typeof constructor_ === 'function' && constructor_ !== Function.prototype; constructor_ = Object.getPrototypeOf(constructor_)) {
+		if (value instanceof constructor_) {
+			return true;
+		}
+	}
+
+	return false;
+};
+
 // Accepted custom responses are treated as full Responses throughout Ky.
 // If a custom fetch returns one, it must behave like a Response for cloning,
 // body consumption, `json()` decoration, and any enabled stream features.
